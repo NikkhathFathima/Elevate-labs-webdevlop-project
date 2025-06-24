@@ -1,0 +1,1212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Event Management System</title>
+  
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Date Range Picker -->
+  <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css">
+  
+  <style id="app-style">
+    body {
+      min-height: 100vh;
+      background-color: #f8f9fa;
+    }
+    
+    .event-card {
+      transition: transform 0.3s ease;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .event-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    .card-title {
+      font-weight: 600;
+    }
+    
+    .event-date {
+      color: #6c757d;
+    }
+    
+    .event-location {
+      font-size: 0.9rem;
+    }
+    
+    .search-container {
+      background-color: #fff;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 30px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+    
+    .loading-spinner {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(255, 255, 255, 0.7);
+      z-index: 9999;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    .filter-badge {
+      background-color: #e9ecef;
+      color: #495057;
+      font-weight: 500;
+      margin-right: 8px;
+      padding: 6px 12px;
+      border-radius: 20px;
+    }
+    
+    .navbar {
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+    
+    .page-container {
+      padding: 30px 0;
+    }
+    
+    .form-section {
+      background: white;
+      border-radius: 8px;
+      padding: 25px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+    
+    .active-filter {
+      background-color: #0d6efd;
+      color: white;
+    }
+    
+    .no-events {
+      text-align: center;
+      padding: 40px 0;
+      color: #6c757d;
+    }
+    
+    .past-event {
+      opacity: 0.7;
+    }
+
+    .qr-code-container {
+      text-align: center;
+      padding: 20px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+    
+    .rsvp-list {
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    
+    .attendee-item {
+      border-left: 3px solid #0d6efd;
+      background-color: #f8f9fa;
+      margin-bottom: 8px;
+      padding: 10px;
+      border-radius: 4px;
+    }
+    
+    .file-upload-container {
+      border: 2px dashed #dee2e6;
+      border-radius: 8px;
+      padding: 30px;
+      text-align: center;
+      margin-bottom: 20px;
+      cursor: pointer;
+    }
+    
+    .file-upload-container:hover {
+      border-color: #0d6efd;
+    }
+    
+    .toast-container {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 9999;
+    }
+    
+    .confirmation-message {
+      text-align: center;
+      padding: 50px 0;
+      display: none;
+    }
+    
+    .confirmation-message i {
+      font-size: 5rem;
+      color: #28a745;
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+  <!-- Navigation -->
+  <nav class="navbar navbar-expand-lg navbar-light bg-white">
+    <div class="container">
+      <a class="navbar-brand fw-bold" href="#home">
+        <i class="fas fa-calendar-check me-2 text-primary"></i>EventHub
+      </a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item" id="nav-dashboard">
+            <a class="nav-link" href="#home" id="dashboard-link">Dashboard</a>
+          </li>
+          <li class="nav-item" id="nav-create-event">
+            <a class="nav-link" href="#create-event" id="create-event-link">Create Event</a>
+          </li>
+          <li class="nav-item" id="nav-check-in">
+            <a class="nav-link" href="#check-in" id="check-in-link">Check-In</a>
+          </li>
+          <li class="nav-item" id="nav-logout">
+            <a class="nav-link" href="javascript:void(0)" id="logout-link">
+              <i class="fas fa-sign-out-alt me-1"></i>Logout
+            </a>
+          </li>
+          <li class="nav-item d-none" id="nav-login">
+            <a class="nav-link" href="#login" id="login-link">
+              <i class="fas fa-sign-in-alt me-1"></i>Login
+            </a>
+          </li>
+          <li class="nav-item d-none" id="nav-register">
+            <a class="nav-link" href="#register" id="register-link">
+              <i class="fas fa-user-plus me-1"></i>Register
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Loading Spinner -->
+  <div class="loading-spinner" id="loading-spinner">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+  </div>
+
+  <!-- Toast Container for Notifications -->
+  <div class="toast-container"></div>
+
+  <!-- Home Page / Dashboard -->
+  <div class="page-container" id="home-page">
+    <div class="container">
+      <h1 class="mb-4">Event Dashboard</h1>
+      
+      <div class="search-container">
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <div class="input-group">
+              <span class="input-group-text bg-white"><i class="fas fa-search text-muted"></i></span>
+              <input type="text" class="form-control" id="event-search" placeholder="Search events...">
+            </div>
+          </div>
+          <div class="col-md-4 mb-3">
+            <input type="text" class="form-control" id="date-range-picker" placeholder="Select date range">
+          </div>
+          <div class="col-md-2 mb-3">
+            <select class="form-select" id="status-filter">
+              <option value="all">All Events</option>
+              <option value="upcoming">Upcoming</option>
+              <option value="past">Past</option>
+            </select>
+          </div>
+        </div>
+        <div class="d-flex flex-wrap" id="active-filters">
+          <!-- Active filters will appear here -->
+        </div>
+      </div>
+      
+      <div class="row" id="events-container">
+        <!-- Event cards will be populated here -->
+        <div class="col-md-4 mb-4">
+          <div class="card event-card">
+            <div class="card-body">
+              <h5 class="card-title">Tech Conference 2025</h5>
+              <p class="event-date mb-1"><i class="far fa-calendar-alt me-2"></i>May 15, 2025 • 09:00 AM</p>
+              <p class="event-location mb-3"><i class="fas fa-map-marker-alt me-2"></i>Innovation Center, Seattle</p>
+              <div class="d-flex justify-content-between">
+                <span class="badge bg-success">Upcoming</span>
+                <div>
+                  <a href="#event-details/1" class="btn btn-sm btn-outline-primary me-2">View Details</a>
+                  <a href="#edit-event/1" class="btn btn-sm btn-outline-secondary">Edit</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+          <div class="card event-card">
+            <div class="card-body">
+              <h5 class="card-title">Product Launch</h5>
+              <p class="event-date mb-1"><i class="far fa-calendar-alt me-2"></i>June 3, 2025 • 01:30 PM</p>
+              <p class="event-location mb-3"><i class="fas fa-map-marker-alt me-2"></i>Grand Hotel, New York</p>
+              <div class="d-flex justify-content-between">
+                <span class="badge bg-success">Upcoming</span>
+                <div>
+                  <a href="#event-details/2" class="btn btn-sm btn-outline-primary me-2">View Details</a>
+                  <a href="#edit-event/2" class="btn btn-sm btn-outline-secondary">Edit</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+          <div class="card event-card past-event">
+            <div class="card-body">
+              <h5 class="card-title">Team Building Workshop</h5>
+              <p class="event-date mb-1"><i class="far fa-calendar-alt me-2"></i>April 10, 2025 • 10:00 AM</p>
+              <p class="event-location mb-3"><i class="fas fa-map-marker-alt me-2"></i>Central Park, New York</p>
+              <div class="d-flex justify-content-between">
+                <span class="badge bg-secondary">Past</span>
+                <div>
+                  <a href="#event-details/3" class="btn btn-sm btn-outline-primary me-2">View Details</a>
+                  <a href="#edit-event/3" class="btn btn-sm btn-outline-secondary">Edit</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Create Event Page -->
+  <div class="page-container d-none" id="create-event-page">
+    <div class="container">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Create Event</h1>
+        <a href="#home" class="btn btn-outline-secondary">
+          <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+        </a>
+      </div>
+      
+      <div class="form-section">
+        <form id="create-event-form">
+          <div class="mb-3">
+            <label for="event-title" class="form-label">Event Title</label>
+            <input type="text" class="form-control" id="event-title" required>
+          </div>
+          
+          <div class="mb-3">
+            <label for="event-description" class="form-label">Description</label>
+            <textarea class="form-control" id="event-description" rows="4" required></textarea>
+          </div>
+          
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label for="event-date" class="form-label">Date</label>
+              <input type="date" class="form-control" id="event-date" required>
+            </div>
+            <div class="col-md-6">
+              <label for="event-time" class="form-label">Time</label>
+              <input type="time" class="form-control" id="event-time" required>
+            </div>
+          </div>
+          
+          <div class="mb-3">
+            <label for="event-location" class="form-label">Location</label>
+            <input type="text" class="form-control" id="event-location" required>
+          </div>
+          
+          <div class="mb-3">
+            <label for="event-capacity" class="form-label">Capacity</label>
+            <input type="number" class="form-control" id="event-capacity" min="1" required>
+          </div>
+          
+          <div class="d-grid">
+            <button type="submit" class="btn btn-primary btn-lg">
+              <i class="fas fa-save me-2"></i>Save Event
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Event Details Page -->
+  <div class="page-container d-none" id="event-details-page">
+    <div class="container">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 id="detail-event-title">Event Details</h1>
+        <a href="#home" class="btn btn-outline-secondary">
+          <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+        </a>
+      </div>
+      
+      <div class="row">
+        <div class="col-lg-8">
+          <div class="form-section mb-4">
+            <div class="mb-4">
+              <h5 class="text-muted mb-3">Event Information</h5>
+              <p id="detail-event-description" class="lead">Event description will appear here.</p>
+              
+              <div class="row mt-4">
+                <div class="col-md-6 mb-3">
+                  <div class="d-flex align-items-center">
+                    <div class="bg-light p-2 rounded-circle me-3">
+                      <i class="far fa-calendar-alt text-primary"></i>
+                    </div>
+                    <div>
+                      <small class="text-muted d-block">Date & Time</small>
+                      <span id="detail-event-datetime">May 15, 2025 • 09:00 AM</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="col-md-6 mb-3">
+                  <div class="d-flex align-items-center">
+                    <div class="bg-light p-2 rounded-circle me-3">
+                      <i class="fas fa-map-marker-alt text-primary"></i>
+                    </div>
+                    <div>
+                      <small class="text-muted d-block">Location</small>
+                      <span id="detail-event-location">Innovation Center, Seattle</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="col-md-6 mb-3">
+                  <div class="d-flex align-items-center">
+                    <div class="bg-light p-2 rounded-circle me-3">
+                      <i class="fas fa-users text-primary"></i>
+                    </div>
+                    <div>
+                      <small class="text-muted d-block">Capacity</small>
+                      <span id="detail-event-capacity">150 People</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="col-md-6 mb-3">
+                  <div class="d-flex align-items-center">
+                    <div class="bg-light p-2 rounded-circle me-3">
+                      <i class="fas fa-user-check text-primary"></i>
+                    </div>
+                    <div>
+                      <small class="text-muted d-block">RSVPs</small>
+                      <span id="detail-event-rsvps">68 Confirmed</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="d-flex mt-4">
+              <button class="btn btn-primary me-2" id="send-reminder-btn">
+                <i class="fas fa-bell me-2"></i>Send Reminder
+              </button>
+              <button class="btn btn-outline-primary" id="generate-qr-btn">
+                <i class="fas fa-qrcode me-2"></i>Generate QR Code
+              </button>
+            </div>
+          </div>
+          
+          <div class="form-section">
+            <h5 class="mb-3">RSVP List</h5>
+            <div class="rsvp-list" id="rsvp-list">
+              <div class="attendee-item">
+                <div class="d-flex justify-content-between">
+                  <div>
+                    <strong>John Smith</strong>
+                    <div class="text-muted small">john.smith@example.com</div>
+                  </div>
+                  <span class="badge bg-success align-self-center">Confirmed</span>
+                </div>
+              </div>
+              
+              <div class="attendee-item">
+                <div class="d-flex justify-content-between">
+                  <div>
+                    <strong>Emily Johnson</strong>
+                    <div class="text-muted small">emily.j@example.com</div>
+                  </div>
+                  <span class="badge bg-success align-self-center">Confirmed</span>
+                </div>
+              </div>
+              
+              <div class="attendee-item">
+                <div class="d-flex justify-content-between">
+                  <div>
+                    <strong>Michael Davis</strong>
+                    <div class="text-muted small">michael.d@example.com</div>
+                  </div>
+                  <span class="badge bg-success align-self-center">Confirmed</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="col-lg-4">
+          <div class="qr-code-container" id="qr-code-container">
+            <h5 class="mb-3">Event QR Code</h5>
+            <p class="text-muted small mb-3">Share this QR code with attendees for easy check-in.</p>
+            <div id="qr-code">
+              <img src="https://cdn.pixabay.com/photo/2021/09/14/11/36/qr-code-6623466_640.jpg" alt="QR Code" class="img-fluid mb-3" style="max-width: 200px;">
+            </div>
+            <button class="btn btn-sm btn-outline-secondary" id="download-qr-btn">
+              <i class="fas fa-download me-2"></i>Download QR Code
+            </button>
+          </div>
+          
+          <div class="form-section mt-4">
+            <h5 class="mb-3">Event Link</h5>
+            <div class="input-group">
+              <input type="text" class="form-control" id="event-link" value="https://eventhub.com/rsvp/event-12345" readonly>
+              <button class="btn btn-outline-secondary" type="button" id="copy-link-btn">
+                <i class="fas fa-copy"></i>
+              </button>
+            </div>
+            <p class="text-muted small mt-2">Share this link with potential attendees to RSVP.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RSVP Page -->
+  <div class="page-container d-none" id="rsvp-page">
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+          <div class="form-section">
+            <h2 class="text-center mb-4" id="rsvp-event-title">Tech Conference 2025</h2>
+            <p class="text-center mb-4" id="rsvp-event-info">
+              <span class="me-3"><i class="far fa-calendar-alt me-2"></i>May 15, 2025 • 09:00 AM</span>
+              <span><i class="fas fa-map-marker-alt me-2"></i>Innovation Center, Seattle</span>
+            </p>
+            
+            <form id="rsvp-form">
+              <div class="mb-3">
+                <label for="rsvp-name" class="form-label">Your Name</label>
+                <input type="text" class="form-control" id="rsvp-name" required>
+              </div>
+              
+              <div class="mb-3">
+                <label for="rsvp-email" class="form-label">Email Address</label>
+                <input type="email" class="form-control" id="rsvp-email" required>
+              </div>
+              
+              <div class="d-grid">
+                <button type="submit" class="btn btn-primary btn-lg">Submit RSVP</button>
+              </div>
+            </form>
+            
+            <div class="confirmation-message" id="rsvp-confirmation">
+              <i class="fas fa-check-circle"></i>
+              <h3>Thank You!</h3>
+              <p class="lead">Your RSVP has been confirmed.</p>
+              <p>We've sent a confirmation email with all the details.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Check-In Page -->
+  <div class="page-container d-none" id="check-in-page">
+    <div class="container">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Event Check-In</h1>
+        <a href="#home" class="btn btn-outline-secondary">
+          <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+        </a>
+      </div>
+      
+      <div class="row">
+        <div class="col-lg-6 mb-4">
+          <div class="form-section">
+            <h5 class="mb-3">Scan QR Code</h5>
+            <p class="text-muted mb-4">Upload a QR code image or scan using your device's camera.</p>
+            
+            <div class="file-upload-container mb-3" id="file-upload-container">
+              <i class="fas fa-upload mb-3" style="font-size: 2rem;"></i>
+              <h5>Drop QR code image here</h5>
+              <p class="text-muted">or click to browse files</p>
+              <input type="file" id="qr-file-input" accept="image/*" class="d-none">
+            </div>
+            
+            <div class="d-grid">
+              <button class="btn btn-primary" id="camera-scan-btn">
+                <i class="fas fa-camera me-2"></i>Scan with Camera
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <div class="col-lg-6">
+          <div class="form-section">
+            <h5 class="mb-3">Manual Check-In</h5>
+            <p class="text-muted mb-4">Find attendee by name or email to mark attendance.</p>
+            
+            <div class="mb-3">
+              <div class="input-group">
+                <span class="input-group-text bg-white"><i class="fas fa-search text-muted"></i></span>
+                <input type="text" class="form-control" id="attendee-search" placeholder="Search attendee...">
+              </div>
+            </div>
+            
+            <div class="list-group" id="attendee-search-results">
+              <div class="list-group-item list-group-item-action">
+                <div class="d-flex justify-content-between align-items-center">
+                  <div>
+                    <h6 class="mb-1">John Smith</h6>
+                    <small class="text-muted">john.smith@example.com</small>
+                  </div>
+                  <button class="btn btn-sm btn-success check-in-btn">
+                    <i class="fas fa-check me-1"></i>Check In
+                  </button>
+                </div>
+              </div>
+              
+              <div class="list-group-item list-group-item-action">
+                <div class="d-flex justify-content-between align-items-center">
+                  <div>
+                    <h6 class="mb-1">Emily Johnson</h6>
+                    <small class="text-muted">emily.j@example.com</small>
+                  </div>
+                  <button class="btn btn-sm btn-success check-in-btn">
+                    <i class="fas fa-check me-1"></i>Check In
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Login Page -->
+  <div class="page-container d-none" id="login-page">
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+          <div class="form-section mt-5">
+            <h2 class="text-center mb-4">Login to EventHub</h2>
+            <form id="login-form">
+              <div class="mb-3">
+                <label for="login-email" class="form-label">Email Address</label>
+                <input type="email" class="form-control" id="login-email" required>
+              </div>
+              
+              <div class="mb-3">
+                <label for="login-password" class="form-label">Password</label>
+                <input type="password" class="form-control" id="login-password" required>
+              </div>
+              
+              <div class="mb-3 form-check">
+                <input type="checkbox" class="form-check-input" id="remember-me">
+                <label class="form-check-label" for="remember-me">Remember me</label>
+              </div>
+              
+              <div class="d-grid">
+                <button type="submit" class="btn btn-primary btn-lg">
+                  <i class="fas fa-sign-in-alt me-2"></i>Login
+                </button>
+              </div>
+            </form>
+            
+            <div class="text-center mt-4">
+              <p>Don't have an account? <a href="#register">Register here</a></p>
+              <p><a href="javascript:void(0)" id="forgot-password-link">Forgot password?</a></p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Registration Page -->
+  <div class="page-container d-none" id="register-page">
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+          <div class="form-section mt-5">
+            <h2 class="text-center mb-4">Create an Account</h2>
+            <form id="register-form">
+              <div class="mb-3">
+                <label for="register-name" class="form-label">Full Name</label>
+                <input type="text" class="form-control" id="register-name" required>
+              </div>
+              
+              <div class="mb-3">
+                <label for="register-email" class="form-label">Email Address</label>
+                <input type="email" class="form-control" id="register-email" required>
+              </div>
+              
+              <div class="mb-3">
+                <label for="register-password" class="form-label">Password</label>
+                <input type="password" class="form-control" id="register-password" required>
+              </div>
+              
+              <div class="mb-3">
+                <label for="register-confirm-password" class="form-label">Confirm Password</label>
+                <input type="password" class="form-control" id="register-confirm-password" required>
+              </div>
+              
+              <div class="d-grid">
+                <button type="submit" class="btn btn-primary btn-lg">
+                  <i class="fas fa-user-plus me-2"></i>Register
+                </button>
+              </div>
+            </form>
+            
+            <div class="text-center mt-4">
+              <p>Already have an account? <a href="#login">Login here</a></p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap Bundle with Popper -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  
+  <!-- jQuery -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  
+  <!-- Moment.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+  
+  <!-- Date Range Picker -->
+  <script src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
+
+  <script id="app-script">
+    // Router implementation
+    class Router {
+      constructor() {
+        this.routes = {
+          '#home': 'home-page',
+          '#create-event': 'create-event-page',
+          '#event-details': 'event-details-page',
+          '#rsvp': 'rsvp-page',
+          '#check-in': 'check-in-page',
+          '#login': 'login-page',
+          '#register': 'register-page'
+        };
+        
+        window.addEventListener('hashchange', this.handleRouteChange.bind(this));
+        this.handleRouteChange();
+      }
+      
+      handleRouteChange() {
+        const hash = window.location.hash.split('/')[0] || '#home';
+        const pageId = this.routes[hash];
+        
+        // Hide all pages
+        document.querySelectorAll('.page-container').forEach(page => {
+          page.classList.add('d-none');
+        });
+        
+        // Show the correct page
+        if (pageId) {
+          document.getElementById(pageId).classList.remove('d-none');
+        } else {
+          document.getElementById('home-page').classList.remove('d-none');
+        }
+        
+        // Update active nav links
+        this.updateActiveNavLink(hash);
+      }
+      
+      updateActiveNavLink(hash) {
+        document.querySelectorAll('.nav-link').forEach(link => {
+          link.classList.remove('active');
+          
+          // Special case for home link
+          if ((hash === '#home' || hash === '') && 
+              link.getAttribute('href') === '#home') {
+            link.classList.add('active');
+            return;
+          }
+          
+          // Match exact href or starts with for nested routes
+          if (link.getAttribute('href') === hash || 
+              hash.startsWith(link.getAttribute('href') + '/')) {
+            link.classList.add('active');
+          }
+        });
+      }
+    }
+    
+    // API service mock
+    class ApiService {
+      constructor() {
+        this.baseUrl = 'https://api.eventhub.com';
+        this.isAuthenticated = false;
+      }
+      
+      // Show loading spinner
+      showLoading() {
+        document.getElementById('loading-spinner').style.display = 'flex';
+      }
+      
+      // Hide loading spinner
+      hideLoading() {
+        document.getElementById('loading-spinner').style.display = 'none';
+      }
+      
+      // Generic API request method
+      async request(endpoint, method = 'GET', data = null) {
+        this.showLoading();
+        
+        return new Promise((resolve) => {
+          // Simulate API delay
+          setTimeout(() => {
+            this.hideLoading();
+            resolve({
+              success: true,
+              message: "This is a prototype, continue building to see the full version."
+            });
+          }, 800);
+        });
+      }
+      
+      // Get events
+      async getEvents(filters = {}) {
+        return this.request('/events');
+      }
+      
+      // Get event details
+      async getEventDetails(eventId) {
+        return this.request(`/events/${eventId}`);
+      }
+      
+      // Create new event
+      async createEvent(eventData) {
+        return this.request('/events', 'POST', eventData);
+      }
+      
+      // Update event
+      async updateEvent(eventId, eventData) {
+        return this.request(`/events/${eventId}`, 'PUT', eventData);
+      }
+      
+      // Get RSVPs
+      async getRsvps(eventId) {
+        return this.request(`/events/${eventId}/rsvps`);
+      }
+      
+      // Create RSVP
+      async createRsvp(eventId, rsvpData) {
+        return this.request(`/events/${eventId}/rsvps`, 'POST', rsvpData);
+      }
+      
+      // Send reminders
+      async sendReminders(eventId) {
+        return this.request(`/events/${eventId}/send-reminders`, 'POST');
+      }
+      
+      // Generate QR code
+      async generateQrCode(eventId) {
+        return this.request(`/events/${eventId}/qr-code`);
+      }
+      
+      // Check-in attendee
+      async checkInAttendee(eventId, attendeeId) {
+        return this.request(`/events/${eventId}/check-in/${attendeeId}`, 'POST');
+      }
+      
+      // Login user
+      async login(email, password) {
+        const response = await this.request('/auth/login', 'POST', { email, password });
+        if (response.success) {
+          this.isAuthenticated = true;
+          localStorage.setItem('isAuthenticated', 'true');
+        }
+        return response;
+      }
+      
+      // Register user
+      async register(userData) {
+        return this.request('/auth/register', 'POST', userData);
+      }
+      
+      // Logout user
+      logout() {
+        this.isAuthenticated = false;
+        localStorage.removeItem('isAuthenticated');
+      }
+      
+      // Check if user is authenticated
+      checkAuth() {
+        this.isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
+        return this.isAuthenticated;
+      }
+    }
+    
+    // Toast notification
+    function showToast(message, type = 'success') {
+      const toastContainer = document.querySelector('.toast-container');
+      const toastId = 'toast-' + Date.now();
+      const toastHtml = `
+        <div id="${toastId}" class="toast align-items-center text-white bg-${type} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+          <div class="d-flex">
+            <div class="toast-body">
+              ${message}
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+          </div>
+        </div>
+      `;
+      
+      toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+      const toastElement = document.getElementById(toastId);
+      const toast = new bootstrap.Toast(toastElement, { autohide: true, delay: 3000 });
+      toast.show();
+      
+      // Remove toast after it's hidden
+      toastElement.addEventListener('hidden.bs.toast', () => {
+        toastElement.remove();
+      });
+    }
+    
+    // Initialize application
+    document.addEventListener('DOMContentLoaded', () => {
+      // Initialize services
+      const api = new ApiService();
+      const router = new Router();
+      
+      // Check authentication status and update UI
+      function updateAuthUI() {
+        const isAuthenticated = api.checkAuth();
+        
+        // Update navigation based on auth status
+        if (isAuthenticated) {
+          document.getElementById('nav-dashboard').classList.remove('d-none');
+          document.getElementById('nav-create-event').classList.remove('d-none');
+          document.getElementById('nav-check-in').classList.remove('d-none');
+          document.getElementById('nav-logout').classList.remove('d-none');
+          document.getElementById('nav-login').classList.add('d-none');
+          document.getElementById('nav-register').classList.add('d-none');
+        } else {
+          document.getElementById('nav-dashboard').classList.add('d-none');
+          document.getElementById('nav-create-event').classList.add('d-none');
+          document.getElementById('nav-check-in').classList.add('d-none');
+          document.getElementById('nav-logout').classList.add('d-none');
+          document.getElementById('nav-login').classList.remove('d-none');
+          document.getElementById('nav-register').classList.remove('d-none');
+          
+          // Redirect to login if not on login or register page
+          const hash = window.location.hash;
+          if (hash !== '#login' && hash !== '#register') {
+            window.location.hash = '#login';
+          }
+        }
+      }
+      
+      // Call on initial load
+      updateAuthUI();
+      
+      // Setup date range picker
+      $('#date-range-picker').daterangepicker({
+        opens: 'left',
+        autoUpdateInput: false,
+        locale: {
+          cancelLabel: 'Clear'
+        }
+      });
+      
+      $('#date-range-picker').on('apply.daterangepicker', function(ev, picker) {
+        $(this).val(picker.startDate.format('MM/DD/YYYY') + ' - ' + picker.endDate.format('MM/DD/YYYY'));
+        // Save filter to localStorage
+        localStorage.setItem('eventDateFilter', $(this).val());
+      });
+      
+      $('#date-range-picker').on('cancel.daterangepicker', function() {
+        $(this).val('');
+        localStorage.removeItem('eventDateFilter');
+      });
+      
+      // Initialize with saved filters
+      const savedDateFilter = localStorage.getItem('eventDateFilter');
+      if (savedDateFilter) {
+        $('#date-range-picker').val(savedDateFilter);
+      }
+      
+      const savedStatusFilter = localStorage.getItem('eventStatusFilter');
+      if (savedStatusFilter) {
+        $('#status-filter').val(savedStatusFilter);
+      }
+      
+      // Handle status filter change
+      $('#status-filter').on('change', function() {
+        localStorage.setItem('eventStatusFilter', $(this).val());
+      });
+      
+      // Add logout functionality
+      document.getElementById('logout-link').addEventListener('click', function(e) {
+        e.preventDefault();
+        api.logout();
+        updateAuthUI();
+        showToast('Logged out successfully', 'info');
+        window.location.hash = '#login';
+      });
+      
+      // Create event form submission
+      document.getElementById('create-event-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const eventData = {
+          title: document.getElementById('event-title').value,
+          description: document.getElementById('event-description').value,
+          date: document.getElementById('event-date').value,
+          time: document.getElementById('event-time').value,
+          location: document.getElementById('event-location').value,
+          capacity: document.getElementById('event-capacity').value
+        };
+        
+        api.createEvent(eventData).then(response => {
+          showToast('Event created successfully!');
+          window.location.hash = '#home';
+        });
+      });
+      
+      // RSVP form submission
+      document.getElementById('rsvp-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const rsvpData = {
+          name: document.getElementById('rsvp-name').value,
+          email: document.getElementById('rsvp-email').value
+        };
+        
+        // Show loading state
+        const submitBtn = this.querySelector('button[type="submit"]');
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
+        submitBtn.disabled = true;
+        
+        // Simulate API call
+        setTimeout(() => {
+          document.getElementById('rsvp-form').style.display = 'none';
+          document.getElementById('rsvp-confirmation').style.display = 'block';
+          showToast('RSVP confirmed successfully!');
+        }, 1500);
+      });
+      
+      // Login form submission
+      document.getElementById('login-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const email = document.getElementById('login-email').value;
+        const password = document.getElementById('login-password').value;
+        
+        api.login(email, password).then(response => {
+          if (response.success) {
+            showToast('Login successful!', 'success');
+            updateAuthUI();
+            window.location.hash = '#home';
+          } else {
+            showToast('Login failed. Please try again.', 'danger');
+          }
+        });
+      });
+      
+      // Register form submission
+      document.getElementById('register-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const name = document.getElementById('register-name').value;
+        const email = document.getElementById('register-email').value;
+        const password = document.getElementById('register-password').value;
+        const confirmPassword = document.getElementById('register-confirm-password').value;
+        
+        // Check if passwords match
+        if (password !== confirmPassword) {
+          showToast('Passwords do not match!', 'danger');
+          return;
+        }
+        
+        const userData = {
+          name: name,
+          email: email,
+          password: password
+        };
+        
+        api.register(userData).then(response => {
+          if (response.success) {
+            showToast('Registration successful! Please log in.', 'success');
+            // Redirect to login page after successful registration
+            setTimeout(() => {
+              window.location.hash = '#login';
+            }, 1500);
+          } else {
+            showToast('Registration failed. Please try again.', 'danger');
+          }
+        });
+      });
+      
+      // Send reminder button
+      document.getElementById('send-reminder-btn').addEventListener('click', function() {
+        const button = this;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Sending...';
+        button.disabled = true;
+        
+        api.sendReminders(1).then(response => {
+          button.innerHTML = '<i class="fas fa-bell me-2"></i>Send Reminder';
+          button.disabled = false;
+          showToast('Reminders sent successfully!');
+        });
+      });
+      
+      // Generate QR code button
+      document.getElementById('generate-qr-btn').addEventListener('click', function() {
+        const button = this;
+        const eventId = "exampleEvent123";
+        
+        button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Generating...';
+        button.disabled = true;
+        
+        // Simulate QR generation since we can't actually call the API
+        setTimeout(() => {
+          document.querySelector('#qr-code img').src = 
+            'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + 
+            encodeURIComponent(`https://eventhub.com/check-in/${eventId}`);
+          
+          button.innerHTML = '<i class="fas fa-qrcode me-2"></i>Generate QR Code';
+          button.disabled = false;
+          showToast('QR code generated successfully!');
+        }, 1500);
+      });
+      
+      // Download QR code button
+      document.getElementById('download-qr-btn').addEventListener('click', function() {
+        const qrCodeUrl = document.querySelector('#qr-code img').src;
+        if (qrCodeUrl) {
+          const link = document.createElement('a');
+          link.href = qrCodeUrl;
+          link.download = 'event-qr-code.png';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          showToast('QR code downloaded!');
+        } else {
+          showToast('Please generate a QR code first', 'warning');
+        }
+      });
+      
+      // Copy event link button
+      document.getElementById('copy-link-btn').addEventListener('click', function() {
+        const eventLink = document.getElementById('event-link');
+        eventLink.select();
+        document.execCommand('copy');
+        showToast('Event link copied to clipboard!');
+      });
+      
+      // File upload for QR code
+      document.getElementById('file-upload-container').addEventListener('click', function() {
+        document.getElementById('qr-file-input').click();
+      });
+      
+      document.getElementById('qr-file-input').addEventListener('change', function(e) {
+        if (e.target.files.length > 0) {
+          const file = e.target.files[0];
+          const reader = new FileReader();
+          
+          reader.onload = function(event) {
+            // In a real app, you would process the QR code image here
+            showToast('QR code uploaded, processing...', 'info');
+            
+            // Simulate processing delay
+            setTimeout(() => {
+              showToast('Attendee checked in successfully!');
+              // Reset the file input
+              e.target.value = '';
+            }, 1500);
+          };
+          
+          reader.readAsDataURL(file);
+        }
+      });
+      
+      // Camera scan button
+      document.getElementById('camera-scan-btn').addEventListener('click', function() {
+        showToast('Camera access requested', 'info');
+        setTimeout(() => {
+          showToast('Simulating camera scan in prototype mode');
+        }, 1500);
+      });
+      
+      // Check-in buttons
+      document.querySelectorAll('.check-in-btn').forEach(button => {
+        button.addEventListener('click', function() {
+          this.innerHTML = '<i class="fas fa-check-circle me-1"></i>Checked In';
+          this.classList.remove('btn-success');
+          this.classList.add('btn-secondary');
+          this.disabled = true;
+          
+          showToast('Attendee checked in successfully!');
+        });
+      });
+      
+      // Forgot password link
+      document.getElementById('forgot-password-link').addEventListener('click', function(e) {
+        e.preventDefault();
+        showToast('Password reset link would be sent to your email in a real app', 'info');
+      });
+      
+      // Ensure all navigation elements have proper href attributes
+      document.getElementById('dashboard-link').href = '#home';
+      document.getElementById('create-event-link').href = '#create-event';
+      document.getElementById('check-in-link').href = '#check-in';
+      document.getElementById('login-link').href = '#login';
+      document.getElementById('register-link').href = '#register';
+      
+      // Add direct event handlers for main navigation buttons to ensure they work
+      document.getElementById('dashboard-link').addEventListener('click', function(e) {
+        window.location.hash = '#home';
+      });
+      
+      document.getElementById('create-event-link').addEventListener('click', function(e) {
+        window.location.hash = '#create-event';
+      });
+      
+      document.getElementById('check-in-link').addEventListener('click', function(e) {
+        window.location.hash = '#check-in';
+      });
+      
+      document.getElementById('login-link').addEventListener('click', function(e) {
+        window.location.hash = '#login';
+      });
+      
+      document.getElementById('register-link').addEventListener('click', function(e) {
+        window.location.hash = '#register';
+      });
+      
+      // Handle the back to dashboard buttons
+      document.querySelectorAll('[href="#home"].btn').forEach(button => {
+        button.addEventListener('click', function(e) {
+          window.location.hash = '#home';
+        });
+      });
+    });
+  </script>
+</body>
+</html>
