@@ -29,8 +29,7 @@ A modern web application for creating, managing, and tracking events with attend
 
 ## 🚀 Live Demo
 
-[View Live Demo](https://yourusername.github.io/event-management-system)  
-*(Replace with your GitHub Pages/Vercel/Netlify link)*
+https://nikkhathfathima.github.io/Elevate-labs-webdevlop-project/
 
 ## 🛠️ Technologies Used
 
@@ -81,4 +80,4 @@ Distributed under the MIT License. See LICENSE for more information.
 📧 Contact
 email: mdnikkhath1303@gmail.com
 
-Project Link: https://github.com/yourusername/event-management-system
+Project Link: https://nikkhathfathima.github.io/Elevate-labs-webdevlop-project/
